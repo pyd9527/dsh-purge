@@ -1,0 +1,82 @@
+name: Sync upstream
+
+# 把 realMisakaMikoto/dsh-purge 的更新自动拉进本仓库。
+#
+# 设计要点：
+# 1) 用 merge 而不是 reset --hard —— 本仓库有一个自己的提交（就是本文件），
+#    reset 会把它删掉，导致定时任务自己消失。上游的 .github/workflows/ 只有
+#    release.yml，与本文件不同名，因此 merge 不会冲突；真冲突时 -X theirs 让上游优先。
+# 2) 本仓库必须是「普通仓库」而不是 fork —— GitHub 默认不运行 fork 里的
+#    scheduled workflow，普通仓库才会按时触发。
+# 3) 公开仓库的定时任务在连续 60 天无提交活动后会被 GitHub 自动停用，
+#    届时到 Actions 页面点一次 "Enable workflow" 即可恢复。
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch upstream
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote remove upstream 2>/dev/null || true
+          git remote add upstream https://github.com/realMisakaMikoto/dsh-purge.git
+          git fetch upstream --tags --prune --force
+
+      - name: Merge upstream master
+        id: merge
+        run: |
+          set -euo pipefail
+          UPSTREAM_SHA="$(git rev-parse upstream/master)"
+          LOCAL_SHA="$(git rev-parse HEAD)"
+          echo "upstream=$UPSTREAM_SHA local=$LOCAL_SHA"
+          if git merge-base --is-ancestor "$UPSTREAM_SHA" "$LOCAL_SHA"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "已包含上游最新提交，无需同步"
+            exit 0
+          fi
+          git merge -X theirs --no-edit "$UPSTREAM_SHA"
+          VERSION="$(node -p "require('./package.json').version" 2>/dev/null || echo unknown)"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "同步到上游 $UPSTREAM_SHA，版本 $VERSION"
+
+      - name: Push
+        if: steps.merge.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git push origin HEAD:master
+          git push origin --tags || true
+
+      - name: Summary
+        run: |
+          {
+            echo "### Sync upstream"
+            echo ""
+            echo "| 项 | 值 |"
+            echo "| --- | --- |"
+            echo "| 有更新 | ${{ steps.merge.outputs.changed }} |"
+            echo "| 版本 | ${{ steps.merge.outputs.version }} |"
+            echo "| HEAD | \`$(git rev-parse --short HEAD)\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
