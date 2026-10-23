@@ -174,11 +174,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"theme.ink": "墨",
 			"purge.title": "补丁",
 			"override.title": "提示词",
-			"own.title": "自己的服务器",
-			"own.hint": "每行一个 IP 或完整主机名。可以写成 账号@主机，账号只用来认出这种写法。主机名会连同它当时解析出的地址一起放行。不要写密钥、密码、网段。",
-			"own.save": "保存名单",
-			"saved.own": "已保存自己的服务器",
-			"saved.own.dropped": "已保存。有 {n} 行不是单个 IP 或主机名，已丢掉",
 			"metric.purged": "已写入",
 			"metric.purged.skip": "已写入。跳过 {n} 项，本机没有这些文件",
 			"metric.pendingShort": "待处理 {n}",
@@ -441,10 +436,10 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rewind.busy": "回退中…",
 			"rewind.empty": "没有可回退的上一句",
 			"rewind.fail": "回退失败: {error}",
-			"rewind.once": "回退一次",
-			"rewind.once.hint": "把这一轮发出去的那句放回输入框，并清掉这一轮",
+			"rewind.once": "回退上一步",
+			"rewind.once.hint": "撤回最后一步已进行的对话，新会话接上之前的上下文；那句回到输入框再发送",
 			"rewind.round": "回退上一轮",
-			"rewind.round.hint": "把这一轮发出去的那句放回输入框；子代理也只撤这一轮",
+			"rewind.round.hint": "撤回上一整轮（含子代理）已进行的对话，新会话接上之前的上下文；那句回到输入框再发送",
 			"hooksDeny.title": "Hooks 拦截",
 			"hooksDeny.bypass": "放行 hooks 的 deny / ask（补丁 30 / 31 / 64 / 65）",
 			"hooksDeny.hint": "关掉后，用户自己的 PreToolUse / UserPromptSubmit / Stop hook 的 deny 会按官方逻辑生效。官方 ask 分支本身是空操作，关开关不会弹出审批框。改完后点「应用」并重启才写进宿主。",
@@ -514,11 +509,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"theme.ink": "Ink",
 			"purge.title": "Patches",
 			"override.title": "Prompt",
-			"own.title": "Own servers",
-			"own.hint": "One IP or exact hostname per line. account@host is accepted; the account only identifies that host. A hostname also allows the addresses it resolves to. Do not enter a key, a password, or a range.",
-			"own.save": "Save list",
-			"saved.own": "Own servers saved",
-			"saved.own.dropped": "Saved. {n} lines were not a single IP or hostname and were dropped",
 			"metric.purged": "Written",
 			"metric.purged.skip": "Written. Skipped {n}; those files are not on this install",
 			"metric.pendingShort": "Pending {n}",
@@ -781,10 +771,10 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rewind.busy": "Undoing…",
 			"rewind.empty": "Nothing to undo",
 			"rewind.fail": "Undo failed: {error}",
-			"rewind.once": "Undo once",
-			"rewind.once.hint": "Put this round's message back in the box and drop only this round",
-			"rewind.round": "Undo last round",
-			"rewind.round.hint": "Put this round's message back in the box; subagents drop only this round",
+			"rewind.once": "Undo last step",
+			"rewind.once.hint": "Withdraw the last step into a new session that keeps earlier context; the line returns to the box",
+			"rewind.round": "Undo last turn",
+			"rewind.round.hint": "Withdraw the last turn (and its subagents) into a new session that keeps earlier context; the line returns to the box",
 			"hooksDeny.title": "Hook interception",
 			"hooksDeny.bypass": "Bypass hook deny / ask (patches 30 / 31 / 64 / 65)",
 			"hooksDeny.hint": "When off, your own PreToolUse / UserPromptSubmit / Stop hook deny runs as the official host wrote it. The official ask branch is a no-op; turning this off will not show an approval dialog. Click Apply and restart to write the host files.",
@@ -1372,8 +1362,6 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			const [override, setOverride] = useState("");
 			const [defaultOverride, setDefaultOverride] = useState("");
 			const [overrideLoaded, setOverrideLoaded] = useState(false);
-			const [ownServers, setOwnServers] = useState("");
-			const [ownLoaded, setOwnLoaded] = useState(false);
 			const [patchBusy, setPatchBusy] = useState(false);
 			const [updateBusy, setUpdateBusy] = useState(false);
 			const [canApplyUpdate, setCanApplyUpdate] = useState(false);
@@ -1581,14 +1569,6 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						else setNotice({ kind: "error", text: tr("err.override", { error: (d && d.error) || "" }) });
 					})
 					.catch((e) => setNotice({ kind: "error", text: tr("err.override", { error: e.message }) }));
-				apiJson("/dsh-purge/own-servers")
-					.then((d) => {
-						if (d && d.ok) {
-							setOwnServers(typeof d.content === "string" ? d.content : "");
-							setOwnLoaded(true);
-						}
-					})
-					.catch(() => {});
 			}, []);
 
 			useEffect(() => {
@@ -2005,42 +1985,6 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 					className: "dshp-hint",
 					style: { margin: "8px 0 0", color: "var(--dshp-danger, #c44)", fontSize: 12 },
 				}, t("need.prompt")) : null,
-				h("div", { className: "dshp-sub" },
-					h("h4", null, t("own.title")),
-					h("div", { className: "dshp-row", style: { margin: 0 } },
-						h(Btn, {
-							kind: "primary",
-							tiny: true,
-							disabled: !ownLoaded,
-							onClick: () => {
-								fetch("/dsh-purge/own-servers", {
-									method: "POST",
-									headers: { "content-type": "application/json" },
-									body: JSON.stringify({ content: ownServers }),
-								}).then((r) => r.json()).then((d) => {
-									if (!d || !d.ok) {
-										setNotice({ kind: "error", text: (d && d.error) || t("err.override", { error: "" }) });
-										return;
-									}
-									if (typeof d.content === "string") setOwnServers(d.content);
-									setNotice({
-										kind: "ok",
-										text: d.dropped > 0 ? t("saved.own.dropped", { n: d.dropped }) : t("saved.own"),
-									});
-								}).catch((e) => setNotice({ kind: "error", text: e.message }));
-							},
-						}, t("own.save")),
-					),
-				),
-				h("textarea", {
-					className: "dshp-area",
-					value: ownServers,
-					onChange: (e) => setOwnServers(e.target.value),
-					spellCheck: false,
-					rows: 4,
-					style: { minHeight: 96 },
-				}),
-				h("p", { className: "dshp-hint", style: { margin: "8px 0 0", color: "var(--dshp-mute)", fontSize: 12 } }, t("own.hint")),
 			);
 		}
 
@@ -3251,8 +3195,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					onMouseDown: (e) => { e.preventDefault(); e.stopPropagation(); },
 					onClick: (e) => { e.preventDefault(); e.stopPropagation(); runRewind("once"); },
 				},
-					h("b", null, rewindText(t, "rewind.once", "回退一次")),
-					h("span", null, rewindText(t, "rewind.once.hint", "把这一轮发出去的那句放回输入框，并清掉这一轮")),
+					h("b", null, rewindText(t, "rewind.once", "Undo last step")),
+					h("span", null, rewindText(t, "rewind.once.hint", "Withdraw the last step into a new session that keeps earlier context; the line returns to the box")),
 				),
 				h("button", {
 					type: "button",
@@ -3260,8 +3204,8 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 					onMouseDown: (e) => { e.preventDefault(); e.stopPropagation(); },
 					onClick: (e) => { e.preventDefault(); e.stopPropagation(); runRewind("round"); },
 				},
-					h("b", null, rewindText(t, "rewind.round", "回退上一轮")),
-					h("span", null, rewindText(t, "rewind.round.hint", "把这一轮发出去的那句放回输入框；子代理也只撤这一轮")),
+					h("b", null, rewindText(t, "rewind.round", "Undo last turn")),
+					h("span", null, rewindText(t, "rewind.round.hint", "Withdraw the last turn (and its subagents) into a new session that keeps earlier context; the line returns to the box")),
 				),
 			);
 			try {

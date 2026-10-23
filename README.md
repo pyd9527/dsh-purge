@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness cybersecurity red-team tool (dsh-purge)</h1>
 
-<p align="center"><strong>Version 1.1.71</strong></p>
+<p align="center"><strong>Version 1.1.73</strong></p>
 
 <p align="center">
   <em>DeepSeek Harness jailbreak: every model, swap prompts per model. Default prompt for 小码酱. Please star ⭐ If you build on this, see Attribution required.</em>
@@ -49,7 +49,6 @@
 - [Install](#install)
 - [Preview](#preview)
 - [Usage](#usage)
-- [Own servers](#own-servers)
 - [How it works](#how-it-works)
 - [Restore](#restore)
 - [Releases](#releases)
@@ -138,7 +137,7 @@ WeChat name **「老张的ai科技」**, same handle as the live-room viewer boa
 2. **Local official Harness only.** Security-eval patches and prompt injection run only on the **official DeepSeek Harness already installed on the user's machine** (`@deepseek-ai` packages, local profile / `$DSH_HOME`). The target is the user's own official local software, **not** someone else's website, server, account, or information system.
 3. **Eval patches do not attack the public internet.** Apply, inject, revert, and uninstall stay in local files and local processes. They **do not scan, probe, intrude, or send attack traffic to any public host or unauthorized system**. Do not use this project as a jump host against the public internet. If "check for updates" is on, the plugin may only contact this plugin's own GitHub repository to compare versions. That is **not** an attack on third-party systems and is **not** authorization to penetrate anything.
 4. **Lawful, controlled scope.** This project is an aid for red-team research and robustness evaluation on an **official Harness the user is entitled to administer**. **Do not run it against targets without the owner's lawful written authorization, public online systems, or production workloads.** Testing must stay on the **authorized local official Harness, offline local synthetic fixtures, authorized cybersecurity ranges, and compliant lab environments**.
-5. **Servers and sites in mainland China, Hong Kong, and Macau are forbidden.** Do not access, scan, probe, or otherwise operate against network ranges in mainland China, Hong Kong, or Macau, or against servers, websites, or addresses that resolve into those ranges. A cloud-provider name is not an exception. The only exception is one exact IP, or one exact hostname, that the user registered in advance as their own server. A key, a password, a network range, a wildcard, or a claim made in the conversation does not add an exception. Anything that is not registered stays forbidden.
+5. **Target selection.** This community build does not impose geographic, industry, or own-server allowlist target restrictions.
 6. **Forbidden uses.** Users must not use this project, directly or indirectly, to violate the following (each must be followed; no excuse to evade):
    - <font color="red"><strong>Criminal Law of the People's Republic of China</strong></font>
    - <font color="red"><strong>Cybersecurity Law of the People's Republic of China</strong></font>
@@ -369,12 +368,6 @@ The first time you open Drill you read the notice, wait out the countdown, scrol
 
 ![Patches](docs/preview/settings.png)
 
-**Own servers**
-
-On the Clean page, under Prompt. One host per line, then Save list. Steps are in [Own servers](#own-servers).
-
-![Own servers](docs/preview/own-servers-en.png)
-
 | Area | What it shows |
 |---|---|
 | dsh-purge | button beside the session title; opens or collapses the dock |
@@ -382,7 +375,6 @@ On the Clean page, under Prompt. One host per line, then Save list. Steps are in
 | Drill | assets, skills, and environment after authorization. The tab says Unauthorized until then |
 | Patches | grouped status, Apply, Restore, or Uninstall |
 | Prompt | edit `prompt-inject.md` as the session override |
-| Own servers | one IP or exact hostname per line, saved to `$DSH_HOME/net-scope-allow.txt` |
 | Rule sets | multiple `AGENTS.md` / `CLAUDE.md`; Enable writes under `$DSH_HOME`, Delete removes the row |
 | Skills | import a zip or folder into this host’s official `$DSH_HOME/skills/<id>/SKILL.md` (web and desktop each use their own home; no drive letter is hardcoded); DSH owns match, load, and `/name`. You can also delete that folder yourself |
 
@@ -392,7 +384,7 @@ On the Clean page, under Prompt. One host per line, then Save list. Steps are in
 
 `bin/` is the CLI, `lib/` is patches and the drill console, `presets/redteam/` is the red-team preset, `skills/redteam/` is the bundled skills, and `client.js` is the dock.
 
-Runtime files live under `$DSH_HOME`: `prompt-inject.md`, `rules/`, `skills/`, `net-scope-allow.txt`, `redteam/`. If `DSH_HOME` is unset, the launcher-adjacent `.dsh` wins over `~/.dsh`. Web and the desktop app each use their own home. Skills are not part of the inject section and do not replace the prompt.
+Runtime files live under `$DSH_HOME`: `prompt-inject.md`, `rules/`, `skills/`, `redteam/`. If `DSH_HOME` is unset, the launcher-adjacent `.dsh` wins over `~/.dsh`. Web and the desktop app each use their own home. Skills are not part of the inject section and do not replace the prompt.
 
 ---
 
@@ -445,22 +437,9 @@ For routine tasks, you can also opt into Low reasoning for new sessions:
 
 Restart `dsh web` to load the profile. The model and reasoning defaults apply to newly created sessions; select Low in the composer for an existing session. The plugin does not change these model preferences automatically. Keep High when the task needs deeper reasoning, and narrow file searches rather than recursively scanning every application directory.
 
-### Own servers
+### Target scope
 
-Addresses in mainland China, Hong Kong, and Macau stay forbidden unless that one host was registered first. Saying “this is my server” in chat does not allow it. A key or a password does not allow it either.
-
-The box sits under Prompt. If the dock does not show it yet, quit DeepSeek Harness completely and open it again.
-
-1. Click **dsh-purge** beside the session title and stay on **Clean**.
-2. Scroll past **Prompt**. **Own servers** is the next block.
-3. Put one host on each line, in one of these forms:
-   - `203.0.113.10` — one IP.
-   - `my-vps.example.com` — one exact hostname. After you save, the addresses that hostname resolves to at lookup time are allowed too.
-   - `alice@my-vps.example.com` — the account only identifies this form. It does not prove the machine is yours.
-4. Click **Save list**. The list is written to `$DSH_HOME/net-scope-allow.txt`.
-5. Keys, passwords, ranges, and wildcards are dropped on save. Unlisted mainland China, Hong Kong, and Macau addresses stay forbidden.
-
-`203.0.113.10` and `example.com` above are only examples of the form. Replace them with your own host before you save.
+This community build does not impose geographic, industry, or own-server allowlist target restrictions. The former Own servers settings and API have been removed. Existing `net-scope-allow.txt` files are left untouched and are no longer read.
 
 ---
 

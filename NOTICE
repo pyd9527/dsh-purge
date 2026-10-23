@@ -1,0 +1,18 @@
+This community build incorporates the following selected portions from
+YuJunZhiXue/dsh-purge 1.1.74, commit 5a9b8e14856138814a2139a0105481e1dcdaece4:
+- lib/redteam/evidence-ledger.mjs and the evidence/unknown tools and preset instructions
+- lib/rewind.js and the related rewind menu text
+
+Those upstream portions are distributed under the Apache License, Version 2.0.
+The license is reproduced in docs/upstream-dsh-purge-LICENSE.
+Other portions retain their existing notices and license terms.
+
+Upstream NOTICE:
+
+dsh-purge
+Copyright 2026 YuJunZhiXue
+
+Source: https://github.com/YuJunZhiXue/dsh-purge
+
+This product is licensed under the Apache License, Version 2.0.
+Derivative works must retain this NOTICE and attribution.
